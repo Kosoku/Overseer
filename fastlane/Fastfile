@@ -1,0 +1,25 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+platform :ios do
+  desc "Print info plist key"
+  desc "- `key`: The info plist key to print"
+  desc "- `path`: The info plist path"
+  lane :print_info_plist_key do |options|
+    Dir.chdir("..") do
+      sh("./scripts/print_info_plist_key.sh #{options[:key]} #{options[:path]}")
+    end
+  end
+end
