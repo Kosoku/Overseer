@@ -14,12 +14,27 @@
 # update_fastlane
 
 platform :ios do
+  desc "Unit tests"
+  desc "- `scheme`: The scheme name to run unit tests for"
+  lane :unit_tests do |options|
+    run_tests(scheme: options[:scheme])
+  end
+
+  desc "Generate code coverage XML file"
+  desc "- `scheme`: The scheme name to generate code coverage XML file for"
+  desc "- `xcodeproj_path`: The path to the xcodeproj file"
+  lane :code_coverage do |options|
+    Dir.chdir("..") do
+      sh("bundle exec slather coverage --cobertura-xml --scheme #{options[:scheme]} #{options[:xcodeproj_path]}")
+    end
+  end
+
   desc "Print info plist key"
   desc "- `key`: The info plist key to print"
   desc "- `path`: The info plist path"
   lane :print_info_plist_key do |options|
     Dir.chdir("..") do
-      sh("./Overseer/scripts/print_info_plist_key.sh #{options[:key]} #{options[:path]}")
+      sh("./Overseer/scripts/print_info_plist_key.sh #{options[:key]} #{options[:path]}").strip()
     end
   end
 
@@ -29,6 +44,19 @@ platform :ios do
   lane :update_docs do |options|
     Dir.chdir("..") do
       sh("./Overseer/scripts/jazzy.sh #{options[:module]} #{options[:info_plist_path]}")
+      sh("git add docs/*")
+      sh("git commit -a -m \"Update docs\"")
+    end
+  end
+
+  desc "Create push git tag"
+  desc "- `info_plist_path`: The info plist path"
+  lane :create_push_git_tag do |options|
+    tag_name = print_info_plist_key(key: "CFBundleShortVersionString", path: options[:info_plist_path])
+    
+    Dir.chdir("..") do
+      sh("git tag -a #{tag_name} -m \"Version #{tag_name}\"")
+      sh("git push --follow-tags")
     end
   end
 end
