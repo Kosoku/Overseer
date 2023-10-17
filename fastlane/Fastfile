@@ -19,7 +19,16 @@ platform :ios do
   desc "- `path`: The info plist path"
   lane :print_info_plist_key do |options|
     Dir.chdir("..") do
-      sh("./scripts/print_info_plist_key.sh #{options[:key]} #{options[:path]}")
+      sh("./Overseer/scripts/print_info_plist_key.sh #{options[:key]} #{options[:path]}")
+    end
+  end
+
+  desc "Update docs"
+  desc "- `module`: The module name"
+  desc "- `info_plist_path`: The path to the info plist"
+  lane :update_docs do |options|
+    Dir.chdir("..") do
+      sh("./Overseer/scripts/jazzy.sh #{options[:module]} #{options[:info_plist_path]}")
     end
   end
 end
