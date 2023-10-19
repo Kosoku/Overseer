@@ -28,6 +28,36 @@ end
 platform :ios do
   info_plist_bundle_short_version_string_key = "CFBundleShortVersionString"
 
+  desc "Lint local podspec"
+  desc "- `podspec_path`: The path to the podspec to lint"
+  lane :lint_local_podspec do |options|
+    podspec_path = get_dictionary_value(options, "podspec_path")
+
+    Dir.chdir("..") do
+      sh("bundle exec pod lib lint #{podspec_path}")
+    end
+  end
+
+  desc "Lint remote podspec"
+  desc "- `podspec_path`: The path to the podspec to lint"
+  lane :lint_remote_podspec do |options|
+    podspec_path = get_dictionary_value(options, "podspec_path")
+
+    Dir.chdir("..") do
+      sh("bundle exec pod spec lint #{podspec_path}")
+    end
+  end
+
+  desc "Publish remote podspec"
+  desc "- `podspec_path`: The path to the podspec to lint"
+  lane :publish_remote_podspec do |options|
+    podspec_path = get_dictionary_value(options, "podspec_path")
+
+    Dir.chdir("..") do
+      sh("bundle exec pod trunk push #{podspec_path}")
+    end
+  end
+
   desc "Unit tests"
   desc "- `scheme_name`: The scheme name to run unit tests for"
   lane :unit_tests do |options|
