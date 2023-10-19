@@ -26,6 +26,8 @@ def get_dictionary_value (dictionary, key)
 end
 
 platform :ios do
+  info_plist_bundle_short_version_string_key = "CFBundleShortVersionString"
+
   desc "Unit tests"
   desc "- `scheme_name`: The scheme name to run unit tests for"
   lane :unit_tests do |options|
@@ -78,6 +80,24 @@ platform :ios do
     Dir.chdir("..") do
       sh("git tag -a #{tag_name} -m \"Version #{tag_name}\"")
       sh("git push --follow-tags")
+    end
+  end
+
+  desc "Updates the version"
+  desc "- `version_name`: The version name to update to"
+  desc "- `info_plist_path` The path to the info plist to update"
+  desc "- `podspec_path`: The path to the podspec to update"
+  lane :update_version do |options|
+    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    podspec_path = get_dictionary_value(options, "podspec_path")
+    version_name = options.fetch("version_name") {
+      prompt(text: "Version name: ")
+    }
+
+    Dir.chdir("..") do
+      sh("./Overseer/scripts/set_info_plist_key.sh #{info_plist_bundle_short_version_string_key} #{version_name} #{info_plist_path}")
+      sh("./Overseer/scripts/set_podspec_version.sh #{version_name} #{podspec_path}")
+      sh("git commit -a -m \"Update version to #{version_name}\"")
     end
   end
 end
