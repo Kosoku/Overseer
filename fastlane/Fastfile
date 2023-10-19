@@ -13,19 +13,36 @@
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 
+def get_dictionary_value (dictionary, key)
+  retval = dictionary.fetch(key) {
+    ENV.fetch(key.upcase, nil)
+  }
+
+  unless retval
+    UI.user_error! "Provide either #{key} value or #{key.upcase} environment variable"
+  end
+
+  return retval
+end
+
 platform :ios do
   desc "Unit tests"
-  desc "- `scheme`: The scheme name to run unit tests for"
+  desc "- `scheme_name`: The scheme name to run unit tests for"
   lane :unit_tests do |options|
-    run_tests(scheme: options[:scheme])
+    scheme_name = get_dictionary_value(options, "scheme_name")
+
+    run_tests(scheme: scheme_name)
   end
 
   desc "Generate code coverage XML file"
-  desc "- `scheme`: The scheme name to generate code coverage XML file for"
+  desc "- `scheme_name`: The scheme name to generate code coverage XML file for"
   desc "- `xcodeproj_path`: The path to the xcodeproj file"
   lane :code_coverage do |options|
     Dir.chdir("..") do
-      sh("bundle exec slather coverage --cobertura-xml --scheme #{options[:scheme]} #{options[:xcodeproj_path]}")
+      scheme_name = get_dictionary_value(options, "scheme_name")
+      xcodeproj_path = get_dictionary_value(options, "xcodeproj_path")
+
+      sh("bundle exec slather coverage --cobertura-xml --scheme #{scheme_name} #{xcodeproj_path}")
     end
   end
 
@@ -39,11 +56,14 @@ platform :ios do
   end
 
   desc "Update docs"
-  desc "- `module`: The module name"
+  desc "- `module_name`: The module name"
   desc "- `info_plist_path`: The path to the info plist"
   lane :update_docs do |options|
     Dir.chdir("..") do
-      sh("./Overseer/scripts/jazzy.sh #{options[:module]} #{options[:info_plist_path]}")
+      module_name = get_dictionary_value(options, "module_name")
+      info_plist_path = get_dictionary_value(options, "info_plist_path")
+
+      sh("./Overseer/scripts/jazzy.sh #{module_name} #{info_plist_path}")
       sh("git add docs/*")
       sh("git commit -a -m \"Update docs\"")
     end
@@ -52,7 +72,8 @@ platform :ios do
   desc "Create push git tag"
   desc "- `info_plist_path`: The info plist path"
   lane :create_push_git_tag do |options|
-    tag_name = print_info_plist_key(key: "CFBundleShortVersionString", path: options[:info_plist_path])
+    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    tag_name = print_info_plist_key(key: "CFBundleShortVersionString", path: info_plist_path)
     
     Dir.chdir("..") do
       sh("git tag -a #{tag_name} -m \"Version #{tag_name}\"")
