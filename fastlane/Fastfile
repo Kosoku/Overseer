@@ -22,7 +22,7 @@ def get_dictionary_value (dictionary, key)
     UI.user_error! "Provide either #{key} value or #{key.upcase} environment variable"
   end
 
-  return retval
+  retval
 end
 
 platform :ios do
