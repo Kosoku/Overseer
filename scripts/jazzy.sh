@@ -15,4 +15,4 @@ then
     exit 1
 fi
 
-bundle exec jazzy --clean --author Kosoku --author_url http://kosoku.com/ --source-host github --source-host-url https://github.com/Kosoku/$MODULE --module-version $(./Overseer/scripts/print_info_plist_key.sh "CFBundleShortVersionString" $INFO_PLIST) --build-tool-arguments -scheme,Feige --module $MODULE --root-url https://kosoku.github.io/$MODULE/ --output docs --theme fullwidth --skip-undocumented
+bundle exec jazzy --clean --author Kosoku --author_url http://kosoku.com/ --source-host github --source-host-url https://github.com/Kosoku/$MODULE --module-version $(./Overseer/scripts/print_info_plist_key.sh "CFBundleShortVersionString" $INFO_PLIST) --build-tool-arguments -scheme,$MODULE --module $MODULE --root-url https://kosoku.github.io/$MODULE/ --output docs --theme fullwidth --skip-undocumented
