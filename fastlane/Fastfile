@@ -29,6 +29,26 @@ platform :ios do
   info_plist_bundle_short_version_string_key = "CFBundleShortVersionString"
   info_plist_bundle_version_key = "CFBundleVersion"
 
+  desc "Encrypt certificates and profiles"
+  desc "- `openssl_password`: The openssl password to use when encrypting files"
+  lane :encrypt do |options|
+    openssl_password = get_dictionary_value(options, "openssl_password")
+
+    Dir.chdir("..") do
+      sh("./Overseer/scripts/encrypt.sh #{openssl_password}")
+    end
+  end
+
+  desc "Decrypt certificates and profiles"
+  desc "- `openssl_password`: The openssl password to use when decrypting files"
+  lane :decrypt do |options|
+    openssl_password = get_dictionary_value(options, "openssl_password")
+
+    Dir.chdir("..") do
+      sh("./Overseer/scripts/decrypt.sh #{openssl_password}")
+    end
+  end
+
   desc "Lint local podspec"
   desc "- `podspec_path`: The path to the podspec to lint"
   lane :lint_local_podspec do |options|
