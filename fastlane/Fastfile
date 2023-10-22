@@ -27,6 +27,7 @@ end
 
 platform :ios do
   info_plist_bundle_short_version_string_key = "CFBundleShortVersionString"
+  info_plist_bundle_version_key = "CFBundleVersion"
 
   desc "Lint local podspec"
   desc "- `podspec_path`: The path to the podspec to lint"
@@ -113,30 +114,60 @@ platform :ios do
     end
   end
 
-  desc "Updates the version"
-  desc "- `version_name`: The version name to update to"
+  desc "Updates the version string"
+  desc "- `version_string`: The version string to update to"
   desc "- `info_plist_path` The path to the info plist to update"
   desc "- `podspec_path`: The path to the podspec to update"
-  lane :update_version do |options|
+  lane :update_version_string do |options|
     info_plist_path = get_dictionary_value(options, "info_plist_path")
     podspec_path = get_dictionary_value(options, "podspec_path", requireValue=false)
-    version_name_current = print_info_plist_key(key: info_plist_bundle_short_version_string_key, path: info_plist_path)
-    version_name = options.fetch("version_name") {
-      prompt(text: "Version name: ")
+    version_string_current = print_info_plist_key(key: info_plist_bundle_short_version_string_key, path: info_plist_path)
+    version_string = options.fetch("version_string") {
+      prompt(text: "Version string: ")
     }
 
-    unless version_name != version_name_current
-      UI.user_error! "Version name (#{version_name}) must be different than current version (#{version_name_current})"
+    unless version_string != version_string_current
+      UI.user_error! "Version name (#{version_string}) must be different than current version (#{version_string_current})"
     end
 
     Dir.chdir("..") do
-      sh("./Overseer/scripts/set_info_plist_key.sh #{info_plist_bundle_short_version_string_key} #{version_name} #{info_plist_path}")
+      sh("./Overseer/scripts/set_info_plist_key.sh #{info_plist_bundle_short_version_string_key} #{version_string} #{info_plist_path}")
       
       if podspec_path
-        sh("./Overseer/scripts/set_podspec_version.sh #{version_name} #{podspec_path}")
+        sh("./Overseer/scripts/set_podspec_version.sh #{version_string} #{podspec_path}")
       end
 
-      sh("git commit -a -m \"Update version to #{version_name}\"")
+      sh("git commit -a -m \"Update version string to #{version_string}\"")
+    end
+  end
+
+  desc "Increments the version"
+  desc "- `info_plist_path` The path to the info plist to update"
+  lane :increment_version do |options|
+    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    version_current = print_info_plist_key(key: info_plist_bundle_version_key, path: info_plist_path)
+    version = (version_current.to_i + 1).to_s
+
+    update_version(info_plist_path: info_plist_path, version: version)
+  end
+
+  desc "Updates the version"
+  desc "- `version`: The version to update to"
+  desc "- `info_plist_path` The path to the info plist to update"
+  lane :update_version do |options|
+    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    version_current = print_info_plist_key(key: info_plist_bundle_version_key, path: info_plist_path)
+    version = options.fetch("version") {
+      prompt(text: "Version: ")
+    }
+
+    unless version != version_current
+      UI.user_error! "Version name (#{version}) must be different than current version (#{version_current})"
+    end
+
+    Dir.chdir("..") do
+      sh("./Overseer/scripts/set_info_plist_key.sh #{info_plist_bundle_version_key} #{version} #{info_plist_path}")
+      sh("git commit -a -m \"Update version to #{version}\"")
     end
   end
 end
