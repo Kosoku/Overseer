@@ -134,6 +134,7 @@ platform :ios do
       
       if podspec_path
         sh("./Overseer/scripts/set_podspec_version.sh #{version_name} #{podspec_path}")
+      end
 
       sh("git commit -a -m \"Update version to #{version_name}\"")
     end
