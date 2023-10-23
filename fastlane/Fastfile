@@ -19,7 +19,7 @@ def get_dictionary_value (dictionary, key, requireValue = true)
   }
 
   unless retval || !requireValue
-    UI.user_error! "Provide either #{key} value or #{key.upcase} environment variable"
+    UI.user_error! "Provide either #{key} value or #{key.to_s.upcase} environment variable"
   end
 
   retval
