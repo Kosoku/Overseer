@@ -15,7 +15,7 @@
 
 def get_dictionary_value (dictionary, key, requireValue = true)
   retval = dictionary.fetch(key) {
-    ENV.fetch(key.upcase, nil)
+    ENV.fetch(key.to_s.upcase, nil)
   }
 
   unless retval || !requireValue
@@ -32,7 +32,7 @@ platform :ios do
   desc "Encrypt certificates and profiles"
   desc "- `openssl_password`: The openssl password to use when encrypting files"
   lane :encrypt do |options|
-    openssl_password = get_dictionary_value(options, "openssl_password")
+    openssl_password = get_dictionary_value(options, :openssl_password)
 
     Dir.chdir("..") do
       sh("./Overseer/scripts/encrypt.sh #{openssl_password}")
@@ -42,7 +42,7 @@ platform :ios do
   desc "Decrypt certificates and profiles"
   desc "- `openssl_password`: The openssl password to use when decrypting files"
   lane :decrypt do |options|
-    openssl_password = get_dictionary_value(options, "openssl_password")
+    openssl_password = get_dictionary_value(options, :openssl_password)
 
     Dir.chdir("..") do
       sh("./Overseer/scripts/decrypt.sh #{openssl_password}")
@@ -52,7 +52,7 @@ platform :ios do
   desc "Lint local podspec"
   desc "- `podspec_path`: The path to the podspec to lint"
   lane :lint_local_podspec do |options|
-    podspec_path = get_dictionary_value(options, "podspec_path")
+    podspec_path = get_dictionary_value(options, :podspec_path)
 
     Dir.chdir("..") do
       sh("bundle exec pod lib lint #{podspec_path}")
@@ -62,7 +62,7 @@ platform :ios do
   desc "Lint remote podspec"
   desc "- `podspec_path`: The path to the podspec to lint"
   lane :lint_remote_podspec do |options|
-    podspec_path = get_dictionary_value(options, "podspec_path")
+    podspec_path = get_dictionary_value(options, :podspec_path)
 
     Dir.chdir("..") do
       sh("bundle exec pod spec lint #{podspec_path}")
@@ -72,7 +72,7 @@ platform :ios do
   desc "Publish remote podspec"
   desc "- `podspec_path`: The path to the podspec to lint"
   lane :publish_remote_podspec do |options|
-    podspec_path = get_dictionary_value(options, "podspec_path")
+    podspec_path = get_dictionary_value(options, :podspec_path)
 
     Dir.chdir("..") do
       sh("bundle exec pod trunk push #{podspec_path}")
@@ -82,7 +82,7 @@ platform :ios do
   desc "Unit tests"
   desc "- `scheme_name`: The scheme name to run unit tests for"
   lane :unit_tests do |options|
-    scheme_name = get_dictionary_value(options, "scheme_name")
+    scheme_name = get_dictionary_value(options, :scheme_name)
 
     run_tests(scheme: scheme_name)
   end
@@ -92,8 +92,8 @@ platform :ios do
   desc "- `xcodeproj_path`: The path to the xcodeproj file"
   lane :code_coverage do |options|
     Dir.chdir("..") do
-      scheme_name = get_dictionary_value(options, "scheme_name")
-      xcodeproj_path = get_dictionary_value(options, "xcodeproj_path")
+      scheme_name = get_dictionary_value(options, :scheme_name)
+      xcodeproj_path = get_dictionary_value(options, :xcodeproj_path)
 
       sh("bundle exec slather coverage --cobertura-xml --scheme #{scheme_name} #{xcodeproj_path}")
     end
@@ -111,7 +111,7 @@ platform :ios do
   desc "Print info plist bundle short version string key"
   desc "- `path`: The info plist path"
   lane :print_info_plist_bundle_short_version_string_key do |options|
-    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    info_plist_path = get_dictionary_value(options, :info_plist_path)
 
     print_info_plist_key(key: info_plist_bundle_short_version_string_key, path: info_plist_path)
   end
@@ -119,7 +119,7 @@ platform :ios do
   desc "Print info plist bundle version key"
   desc "- `path`: The info plist path"
   lane :print_info_plist_bundle_version_key do |options|
-    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    info_plist_path = get_dictionary_value(options, :info_plist_path)
 
     print_info_plist_key(key: info_plist_bundle_version_key, path: info_plist_path)
   end
@@ -129,8 +129,8 @@ platform :ios do
   desc "- `info_plist_path`: The path to the info plist"
   lane :update_docs do |options|
     Dir.chdir("..") do
-      module_name = get_dictionary_value(options, "module_name")
-      info_plist_path = get_dictionary_value(options, "info_plist_path")
+      module_name = get_dictionary_value(options, :module_name)
+      info_plist_path = get_dictionary_value(options, :info_plist_path)
 
       sh("./Overseer/scripts/jazzy.sh #{module_name} #{info_plist_path}")
       sh("git add docs/*")
@@ -141,7 +141,7 @@ platform :ios do
   desc "Create push git tag"
   desc "- `info_plist_path`: The info plist path"
   lane :create_push_git_tag do |options|
-    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    info_plist_path = get_dictionary_value(options, :info_plist_path)
     tag_name = print_info_plist_key(key: "CFBundleShortVersionString", path: info_plist_path)
     
     Dir.chdir("..") do
@@ -155,10 +155,10 @@ platform :ios do
   desc "- `info_plist_path` The path to the info plist to update"
   desc "- `podspec_path`: The path to the podspec to update"
   lane :update_version_string do |options|
-    info_plist_path = get_dictionary_value(options, "info_plist_path")
-    podspec_path = get_dictionary_value(options, "podspec_path", requireValue=false)
+    info_plist_path = get_dictionary_value(options, :info_plist_path)
+    podspec_path = get_dictionary_value(options, :podspec_path, requireValue=false)
     version_string_current = print_info_plist_key(key: info_plist_bundle_short_version_string_key, path: info_plist_path)
-    version_string = options.fetch("version_string") {
+    version_string = options.fetch(:version_string) {
       prompt(text: "Version string: ")
     }
 
@@ -180,9 +180,18 @@ platform :ios do
   desc "Increments the version"
   desc "- `info_plist_path` The path to the info plist to update"
   lane :increment_version do |options|
-    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    info_plist_path = get_dictionary_value(options, :info_plist_path)
     version_current = print_info_plist_key(key: info_plist_bundle_version_key, path: info_plist_path)
     version = (version_current.to_i + 1).to_s
+
+    update_version(info_plist_path: info_plist_path, version: version)
+  end
+
+  desc "Set version to git commit count"
+  desc "- `info_plist_path` The path to the info plist to update"
+  lane :set_version_git_commit_count do |options|
+    info_plist_path = get_dictionary_value(options, :info_plist_path)
+    version = sh("git rev-list --count HEAD").strip()
 
     update_version(info_plist_path: info_plist_path, version: version)
   end
@@ -191,9 +200,9 @@ platform :ios do
   desc "- `version`: The version to update to"
   desc "- `info_plist_path` The path to the info plist to update"
   lane :update_version do |options|
-    info_plist_path = get_dictionary_value(options, "info_plist_path")
+    info_plist_path = get_dictionary_value(options, :info_plist_path)
     version_current = print_info_plist_key(key: info_plist_bundle_version_key, path: info_plist_path)
-    version = options.fetch("version") {
+    version = options.fetch(:version) {
       prompt(text: "Version: ")
     }
 
