@@ -25,6 +25,53 @@ def get_dictionary_value (dictionary, key, requireValue = true)
   retval
 end
 
+platform :android do
+  properties_version_name_key = "versionName"
+  properties_version_code_key = "versionCode"
+
+  desc "Print properties file key"
+  desc "- `key`: The properties file key to print"
+  desc "- `path`: The path to the properties file"
+  lane :print_properties_file_key do |options|
+    Dir.chdir("..") do
+      sh("./Overseer/scripts/print_properties_file_key.sh #{options[:key]} #{options[:path]}")
+    end
+  end
+
+  desc "Set properties file key"
+  desc "- `key`: The properties file key to set"
+  desc "- `value`: The new value for the properties file key"
+  desc "- `path`: The path to the properties file"
+  lane :set_properties_file_key do |options|
+    Dir.chdir("..") do
+      sh("./Overseer/scripts/set_properties_file_key.sh #{options[:key]} #{options[:value]} #{options[:path]}")
+    end
+  end
+
+  desc "Set version code to git commit count"
+  lane :set_version_code_git_commit_count do |options|
+    build_properties_path = get_dictionary_value(options, :build_properties_path)
+    version_code = print_git_commit_count
+
+    update_version_code(version_code: version_code)
+  end
+
+  desc "Update version code"
+  lane :update_version_code do |options|
+    build_properties_path = get_dictionary_value(options, :build_properties_path)
+    version_code_current = print_properties_file_key(key: properties_version_code_key, path: build_properties_path)
+    version_code = options.fetch(:version_code) {
+      prompt(text: "Version code: ")
+    }
+
+    unless version_code != version_code_current
+      UI.user_error! "Version code (#{version_code}) must be different than current version code (#{version_code_current})"
+    end
+
+    set_properties_file_key(key: properties_version_code_key, value: version_code, path: build_properties_path)
+  end
+end
+
 platform :ios do
   info_plist_bundle_short_version_string_key = "CFBundleShortVersionString"
   info_plist_bundle_version_key = "CFBundleVersion"
@@ -142,7 +189,7 @@ platform :ios do
   desc "- `info_plist_path`: The info plist path"
   lane :create_push_git_tag do |options|
     info_plist_path = get_dictionary_value(options, :info_plist_path)
-    tag_name = print_info_plist_key(key: "CFBundleShortVersionString", path: info_plist_path)
+    tag_name = print_info_plist_key(key: info_plist_bundle_short_version_string_key, path: info_plist_path)
     
     Dir.chdir("..") do
       sh("git tag -a #{tag_name} -m \"Version #{tag_name}\"")
@@ -191,7 +238,7 @@ platform :ios do
   desc "- `info_plist_path` The path to the info plist to update"
   lane :set_version_git_commit_count do |options|
     info_plist_path = get_dictionary_value(options, :info_plist_path)
-    version = sh("git rev-list --count HEAD").strip()
+    version = print_git_commit_count
 
     update_version(info_plist_path: info_plist_path, version: version)
   end
@@ -207,7 +254,7 @@ platform :ios do
     }
 
     unless version != version_current
-      UI.user_error! "Version name (#{version}) must be different than current version (#{version_current})"
+      UI.user_error! "Version (#{version}) must be different than current version (#{version_current})"
     end
 
     Dir.chdir("..") do
@@ -215,4 +262,8 @@ platform :ios do
       sh("git commit -a -m \"Update version to #{version}\"")
     end
   end
+end
+
+private_lane :print_git_commit_count do
+  sh("git rev-list --count HEAD").strip()
 end
