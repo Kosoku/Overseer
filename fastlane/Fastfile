@@ -69,6 +69,7 @@ platform :android do
     end
 
     set_properties_file_key(key: properties_version_code_key, value: version_code, path: build_properties_path)
+    sh("git commit -a -m \"Update version code to #{version_code}\"")
   end
 end
 

@@ -22,4 +22,4 @@ then
     exit 1
 fi
 
-sed -ir "s/^[#]*\s*$KEY=.*/$KEY=$VALUE/" $FILE_PATH
+sed -i "" -r "s/^[#]*\s*$KEY=.*/$KEY=$VALUE/" $FILE_PATH
