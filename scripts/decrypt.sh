@@ -14,6 +14,6 @@ for FILE in ${FILES[@]}
 do
     FILE_DECRYPTED=${FILE%.*}
 
-    openssl enc -d -aes-256-cbc -pass pass:$PASSWORD -in $FILE -out $FILE_DECRYPTED
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -pass pass:$PASSWORD -in $FILE -out $FILE_DECRYPTED
     echo "Decrypted $FILE_DECRYPTED"
 done
