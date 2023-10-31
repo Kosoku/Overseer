@@ -29,9 +29,8 @@ end
 # MARK: - Public Lanes
 desc "Encrypt platform specific files"
 desc "- `openssl_password`: The openssl password to use when encrypting files"
-desc "- `platform_name`: The platform name (ios/android)"
 lane :encrypt do |options|
-  platform = get_dictionary_value(options, :platform)
+  platform = lane_context[SharedValues::DEFAULT_PLATFORM]
   openssl_password = get_dictionary_value(options, :openssl_password)
 
   Dir.chdir("..") do
@@ -50,6 +49,43 @@ lane :decrypt do |options|
   end
 end
 
+desc "Prints the full version (e.g. \"1.0.0 (1)\")"
+desc "- `include_platform_prefix`: Whether to include the platform name in the returned string"
+desc "- `include_version_prefix`: Whether to include the version prefix in the returned string"
+lane :print_full_version do |options|
+  platform = lane_context[SharedValues::DEFAULT_PLATFORM]
+  include_platform_prefix = options.fetch(:include_platform_prefix, false)
+  include_version_prefix = options.fetch(:include_version_prefix, false)
+  retval = nil
+
+  case platform
+  when :ios
+    self.runner.current_platform = platform
+
+    short_version = print_info_plist_bundle_short_version_string_key
+    version = print_info_plist_bundle_version_key
+    retval = "#{short_version} (#{version})"
+  when :android
+    self.runner.current_platform = platform
+
+    version_name = print_properties_file_version_name_key
+    version_code = print_properties_file_version_code_key
+    retval = "#{version_name} (#{version_code})"
+  else
+    UI.user_error! "Default platform was not set"
+  end
+
+  if include_version_prefix
+    retval = "Version #{retval}"
+  end
+
+  if include_platform_prefix
+    retval = "#{platform.to_s} - #{retval}"
+  end
+
+  retval
+end
+
 # MARK: - Private Lanes
 private_lane :print_git_commit_count do
   sh("git rev-list --count HEAD").strip()
@@ -65,8 +101,24 @@ platform :android do
   desc "- `path`: The path to the properties file"
   lane :print_properties_file_key do |options|
     Dir.chdir("..") do
-      sh("./Overseer/scripts/print_properties_file_key.sh #{options[:key]} #{options[:path]}")
+      sh("./Overseer/scripts/print_properties_file_key.sh #{options[:key]} #{options[:path]}").strip()
     end
+  end
+
+  desc "Prints the versionName key from the build properties file"
+  desc "- `build_properties_path`: The path to the build properties file"
+  lane :print_properties_file_version_name_key do |options|
+    build_properties_path = get_dictionary_value(options, :build_properties_path)
+
+    print_properties_file_key(key: properties_version_name_key, path: build_properties_path)
+  end
+
+  desc "Prints the versionCode key from the build properties file"
+  desc "- `build_properties_path`: The path to the build properties file"
+  lane :print_properties_file_version_code_key do |options|
+    build_properties_path = get_dictionary_value(options, :build_properties_path)
+
+    print_properties_file_key(key: properties_version_code_key, path: build_properties_path)
   end
 
   desc "Set properties file key"
